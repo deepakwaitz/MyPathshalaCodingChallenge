@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "955891189338",
+    "firebase_url": "https://coding-challenge-b9e60.firebaseio.com",
+    "project_id": "coding-challenge-b9e60",
+    "storage_bucket": "coding-challenge-b9e60.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:955891189338:android:814f7c3a07b252d49aba63",
+        "android_client_info": {
+          "package_name": "com.mypathshala.foodscanner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "955891189338-936chdcn8g7d3o34o97lje1rgf9mquif.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mypathshala.foodscanner",
+            "certificate_hash": "0562dc55ba9ac4334c1363c9ed78da3618156b31"
+          }
+        },
+        {
+          "client_id": "955891189338-ism26ui0gqnunqnr4n19kkngp57rdp69.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChYJtT9H8C4p0ouGw8jx2_5ubelAIIOEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "955891189338-ism26ui0gqnunqnr4n19kkngp57rdp69.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
