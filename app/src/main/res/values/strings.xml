@@ -18,4 +18,7 @@
     <string name="placeholder_welcome">, Welcome.</string>
     <string name="exceptions_subtitle">Allergens, food additives and more</string>
     <string name="exceptions_title">Your Exceptions</string>
+    <string name="placeholder_exceptions">Exceptions</string>
+    <string name="placeholder_add">Add</string>
+    <string name="placeholder_cancel">Cancel</string>
 </resources>

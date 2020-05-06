@@ -60,29 +60,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDialog() {
-        val alert = Builder(this)
+        val exceptionAlertDialog = Builder(this)
 
-        val edittext = EditText(this)
-        alert.setMessage("Enter Your Message")
-        alert.setTitle("Enter Your Title")
+        val inputText = EditText(this)
+        exceptionAlertDialog.setTitle(getString(R.string.placeholder_exceptions))
+        exceptionAlertDialog.setView(inputText)
 
-        alert.setView(edittext)
-
-        alert.setPositiveButton(
-            "Add"
-        ) { dialog, whichButton -> //What ever you want to do with the value
-            val enteredValue = edittext.text.toString()
+        exceptionAlertDialog.setPositiveButton(
+            getString(R.string.placeholder_add)
+        ) { _, _ ->
+            val enteredValue = inputText.text.toString()
             if (!TextUtils.isEmpty(enteredValue))
                 addExceptionData(enteredValue)
         }
 
-        alert.setNegativeButton(
-            "Cancel"
-        ) { dialog, whichButton ->
-            // what ever you want to do with No option.
+        exceptionAlertDialog.setNegativeButton(
+            getString(R.string.placeholder_cancel)
+        ) { _, _ ->
         }
-
-        alert.show()
+        exceptionAlertDialog.show()
     }
 
     private fun getExceptionData() {
