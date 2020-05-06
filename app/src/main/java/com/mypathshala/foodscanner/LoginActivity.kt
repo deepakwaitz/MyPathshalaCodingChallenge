@@ -16,7 +16,7 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        //setContentView(R.layout.activity_login)
         createSignIntent()
     }
 
@@ -53,7 +53,7 @@ class LoginActivity : AppCompatActivity() {
 
             if (resultCode == Activity.RESULT_OK) {
                 // Successfully signed in
-                val user = FirebaseAuth.getInstance().currentUser
+                //val user = FirebaseAuth.getInstance().currentUser
                 finish()
                 // ...
             } else {
@@ -76,22 +76,5 @@ class LoginActivity : AppCompatActivity() {
                 // ...
             }
         // [END auth_fui_delete]
-    }
-
-    private fun privacyAndTerms() {
-        val providers = emptyList<AuthUI.IdpConfig>()
-        // [START auth_fui_pp_tos]
-        startActivityForResult(
-            AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(providers)
-                .setTosAndPrivacyPolicyUrls(
-                    "https://example.com/terms.html",
-                    "https://example.com/privacy.html"
-                )
-                .build(),
-            RC_SIGN_IN
-        )
-        // [END auth_fui_pp_tos]
     }
 }

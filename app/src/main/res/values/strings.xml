@@ -9,4 +9,11 @@
     <string name="twitter_consumer_secret" translatable="false">k6TuZ7VrQlE09T7EVcF1LNd7OSTxCPb1gEYTOfJ59go1nmLJXn</string>
     <string name="toc_url">https://my-pathshala.com/terms-and-conditions</string>
     <string name="privacy_policy_url">https://my-pathshala.com/privacy-policy</string>
+    <string name="placeholder_btn_setup_allergy_profile">Setup Allergy Profile</string>
+    <string name="pleceholder_sign_out">Sign Out</string>
+    <string name="placeholder_sign_in">Sign In</string>
+    <string name="placeholder_login_status">Hi, Deepak Ramalingam. Welcome.</string>
+    <string name="placeholder_guest_user">Guest User</string>
+    <string name="placeholder_hi">\"Hi \"</string>
+    <string name="placeholder_welcome">\" , Welcome.\"</string>
 </resources>
