@@ -32,14 +32,14 @@ class MainActivity : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
     private val fireStoreDB = Firebase.firestore
     private var fireStoreDocumentReference: DocumentReference? = null
-    private var tagsLayout: FlowLayout? = null
+    private var exceptionLayout: FlowLayout? = null
     private var allergenicList: ArrayList<String>? = arrayListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        tagsLayout = findViewById(R.id.allergen_items_flow_layout)
+        exceptionLayout = findViewById(R.id.allergen_items_flow_layout)
 
         checkLoginState()
     }
@@ -55,11 +55,20 @@ class MainActivity : AppCompatActivity() {
             ?.addOnFailureListener { e ->
                 Log.w("OnFailureListener", "Error adding document", e)
             }
-
-
     }
 
-    private fun showDialog() {
+    private fun modifyExceptionData() {
+        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
+        fireStoreDocumentReference?.set(allergic)
+            ?.addOnSuccessListener {
+                showAllergensList()
+            }
+            ?.addOnFailureListener { e ->
+                Log.w("OnFailureListener", "Error adding document", e)
+            }
+    }
+
+    private fun showAddDialog() {
         val exceptionAlertDialog = Builder(this)
 
         val inputText = EditText(this)
@@ -98,7 +107,7 @@ class MainActivity : AppCompatActivity() {
     private fun onUserLogout() {
         fireStoreDocumentReference = null
         allergenicList?.clear()
-        tagsLayout?.removeAllViews()
+        exceptionLayout?.removeAllViews()
         //Updating the user login status as guest user
         user_status_tv?.text = getString(R.string.placeholder_guest_user)
 
@@ -116,17 +125,50 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAllergensList() {
-        tagsLayout?.removeAllViews()
+        exceptionLayout?.removeAllViews()
         if (!allergenicList.isNullOrEmpty()) {
-            for (item in allergenicList!!) {
-                val tagView = LayoutInflater.from(tagsLayout?.context)
-                    .inflate(R.layout.allergen_item_layout, tagsLayout, false) as FrameLayout
-                val tvTagName = tagView.findViewById<TextView>(R.id.allergen_name)
-                tvTagName.text = item
+            allergenicList?.forEachIndexed { index, item ->
+                val exceptionView = LayoutInflater.from(exceptionLayout?.context)
+                    .inflate(R.layout.allergen_item_layout, exceptionLayout, false) as FrameLayout
+                val exceptionName = exceptionView.findViewById<TextView>(R.id.allergen_name)
+                exceptionName.text = item
 
-                tagsLayout?.addView(tagView)
+                exceptionView.setOnClickListener {
+                    showEditDeleteDialog(index, item)
+                }
+
+                exceptionLayout?.addView(exceptionView)
+
             }
         }
+    }
+
+    private fun showEditDeleteDialog(index: Int, item: String) {
+        val exceptionAlertDialog = Builder(this)
+
+        val inputText = EditText(this)
+        inputText.setText(item)
+        exceptionAlertDialog.setTitle(getString(R.string.placeholder_modify_exceptions))
+        exceptionAlertDialog.setView(inputText)
+
+        exceptionAlertDialog.setPositiveButton(
+            getString(R.string.placeholder_update)
+        ) { _, _ ->
+            val enteredValue = inputText.text.toString()
+            if (!TextUtils.isEmpty(enteredValue)) {
+                allergenicList?.set(index, enteredValue)
+                modifyExceptionData()
+            }
+
+        }
+
+        exceptionAlertDialog.setNegativeButton(
+            getString(R.string.placeholder_delete)
+        ) { _, _ ->
+            allergenicList?.removeAt(index)
+            modifyExceptionData()
+        }
+        exceptionAlertDialog.show()
     }
 
     private fun onUserLogin() {
@@ -156,7 +198,7 @@ class MainActivity : AppCompatActivity() {
         allergen_profile_card_view?.visibility = View.VISIBLE
 
         add_allergen_button?.setOnClickListener {
-            showDialog()
+            showAddDialog()
         }
 
         getExceptionData()
