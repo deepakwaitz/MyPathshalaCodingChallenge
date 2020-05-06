@@ -7,4 +7,6 @@
     <!-- Twitter consumer key and secret -->
     <string name="twitter_consumer_key" translatable="false">FyQ7vAFoiw2aMD76G30lQV7Jx</string>
     <string name="twitter_consumer_secret" translatable="false">k6TuZ7VrQlE09T7EVcF1LNd7OSTxCPb1gEYTOfJ59go1nmLJXn</string>
+    <string name="toc_url">https://my-pathshala.com/terms-and-conditions</string>
+    <string name="privacy_policy_url">https://my-pathshala.com/privacy-policy</string>
 </resources>

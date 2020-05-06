@@ -34,6 +34,12 @@ class LoginActivity : AppCompatActivity() {
             AuthUI.getInstance()
                 .createSignInIntentBuilder()
                 .setAvailableProviders(providers)
+                .setIsSmartLockEnabled(false)
+                .setLogo(R.drawable.ic_food_scanner_logo)
+                .setTosAndPrivacyPolicyUrls(
+                    getString(R.string.toc_url),
+                    getString(R.string.privacy_policy_url)
+                )
                 .build(),
             RC_SIGN_IN
         )
@@ -51,6 +57,7 @@ class LoginActivity : AppCompatActivity() {
                 finish()
                 // ...
             } else {
+                //showSnackbar(R.string.unknown_error);
                 Log.d("Sign in failed - ", " " + response?.error?.message)
                 // Sign in failed. If response is null the user canceled the
                 // sign-in flow using the back button. Otherwise check
@@ -70,21 +77,6 @@ class LoginActivity : AppCompatActivity() {
             }
         // [END auth_fui_delete]
     }
-
-    /* private fun themeAndLogo() {
-         val providers = emptyList<AuthUI.IdpConfig>()
-
-         // [START auth_fui_theme_logo]
-         startActivityForResult(
-                 AuthUI.getInstance()
-                         .createSignInIntentBuilder()
-                         .setAvailableProviders(providers)
-                         .setLogo(R.drawable.my_great_logo) // Set logo drawable
-                         .setTheme(R.style.MySuperAppTheme) // Set theme
-                         .build(),
-                 RC_SIGN_IN)
-         // [END auth_fui_theme_logo]
-     }*/
 
     private fun privacyAndTerms() {
         val providers = emptyList<AuthUI.IdpConfig>()
