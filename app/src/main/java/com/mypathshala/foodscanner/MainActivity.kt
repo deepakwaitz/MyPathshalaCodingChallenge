@@ -1,27 +1,40 @@
 package com.mypathshala.foodscanner
 
 import android.app.Activity
+import android.app.AlertDialog.Builder
 import android.content.Intent
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val RC_SIGN_IN = 123
+        private const val FIRESTORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
+        private const val FIRESTORE_DOCUMENT_KEY = "allergic"
+
     }
 
-    val auth = FirebaseAuth.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+    private val fireStoreDB = Firebase.firestore
+    private var fireStoreDocumentReference: DocumentReference? = null
     private var tagsLayout: FlowLayout? = null
+    private var allergenicList: ArrayList<String>? = arrayListOf()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -29,25 +42,67 @@ class MainActivity : AppCompatActivity() {
         tagsLayout = findViewById(R.id.allergen_items_flow_layout)
 
         checkLoginState()
-
-        // Access a Cloud Firestore instance from your Activity
-        /* val db = Firebase.firestore
-         val allergic = hashMapOf("allergic" to "fish")
-
-         db.collection("users")
-             .add(allergic)
-             .addOnSuccessListener { documentReference ->
-                 Log.d(
-                     "OnSuccessListener",
-                     "DocumentSnapshot added with ID: ${documentReference.id}"
-                 )
-             }
-             .addOnFailureListener { e ->
-                 Log.w("OnFailureListener", "Error adding document", e)
-             }*/
     }
 
+    private fun addExceptionData(enteredValue: String) {
+        allergenicList?.add(enteredValue)
+
+        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
+        fireStoreDocumentReference?.set(allergic)
+            ?.addOnSuccessListener {
+                showAllergensList()
+            }
+            ?.addOnFailureListener { e ->
+                Log.w("OnFailureListener", "Error adding document", e)
+            }
+
+
+    }
+
+    private fun showDialog() {
+        val alert = Builder(this)
+
+        val edittext = EditText(this)
+        alert.setMessage("Enter Your Message")
+        alert.setTitle("Enter Your Title")
+
+        alert.setView(edittext)
+
+        alert.setPositiveButton(
+            "Add"
+        ) { dialog, whichButton -> //What ever you want to do with the value
+            val enteredValue = edittext.text.toString()
+            if (!TextUtils.isEmpty(enteredValue))
+                addExceptionData(enteredValue)
+        }
+
+        alert.setNegativeButton(
+            "Cancel"
+        ) { dialog, whichButton ->
+            // what ever you want to do with No option.
+        }
+
+        alert.show()
+    }
+
+    private fun getExceptionData() {
+        fireStoreDocumentReference?.get()
+            ?.addOnSuccessListener { result ->
+                if (result?.data?.get(FIRESTORE_DOCUMENT_KEY) != null) {
+                    allergenicList = result?.data?.get(FIRESTORE_DOCUMENT_KEY) as ArrayList<String>
+                    showAllergensList()
+                }
+            }
+            ?.addOnFailureListener { exception ->
+                Log.w("OnFailureListener", "Error getting documents.", exception)
+            }
+    }
+
+
     private fun onUserLogout() {
+        fireStoreDocumentReference = null
+        allergenicList?.clear()
+        tagsLayout?.removeAllViews()
         //Updating the user login status as guest user
         user_status_tv?.text = getString(R.string.placeholder_guest_user)
 
@@ -56,6 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         //Updating views visibility
         signout_button?.visibility = View.GONE
+        allergen_profile_card_view?.visibility = View.GONE
         signin_button?.visibility = View.VISIBLE
 
         signin_button?.setOnClickListener {
@@ -64,19 +120,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAllergensList() {
-        val allergensList = arrayOf("Fish", "Egg", "Meat", "Chicken", "Brinjal")
-        for (item in allergensList) {
-            val tagView = LayoutInflater.from(tagsLayout?.context)
-                .inflate(R.layout.allergen_item_layout, tagsLayout, false) as FrameLayout
-            val tvTagName = tagView.findViewById<TextView>(R.id.allergen_name)
-            tvTagName.text = item
+        tagsLayout?.removeAllViews()
+        if (!allergenicList.isNullOrEmpty()) {
+            for (item in allergenicList!!) {
+                val tagView = LayoutInflater.from(tagsLayout?.context)
+                    .inflate(R.layout.allergen_item_layout, tagsLayout, false) as FrameLayout
+                val tvTagName = tagView.findViewById<TextView>(R.id.allergen_name)
+                tvTagName.text = item
 
-            tagsLayout?.addView(tagView)
+                tagsLayout?.addView(tagView)
+            }
         }
-
     }
 
     private fun onUserLogin() {
+        fireStoreDocumentReference =
+            auth.currentUser?.uid?.let {
+                fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(
+                    it
+                )
+            }
         //Updating the user login status with user name
         user_status_tv?.text =
             getString(R.string.placeholder_hi) + auth.currentUser?.displayName + getString(
@@ -94,7 +157,13 @@ class MainActivity : AppCompatActivity() {
             signOut()
         }
 
-        showAllergensList()
+        allergen_profile_card_view?.visibility = View.VISIBLE
+
+        add_allergen_button?.setOnClickListener {
+            showDialog()
+        }
+
+        getExceptionData()
     }
 
     private fun checkLoginState() {
