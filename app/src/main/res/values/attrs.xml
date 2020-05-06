@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--for Flow layout(tags element)-->
+    <declare-styleable name="FlowLayout">
+        <attr name="verticalSpacing" format="dimension" />
+        <attr name="horizontalSpacing" format="dimension" />
+    </declare-styleable>
+</resources>

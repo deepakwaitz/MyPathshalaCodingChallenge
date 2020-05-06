@@ -15,5 +15,7 @@
     <string name="placeholder_login_status">Hi, Deepak Ramalingam. Welcome.</string>
     <string name="placeholder_guest_user">Guest User</string>
     <string name="placeholder_hi">Hi &#160;</string>
-    <string name="placeholder_welcome">&#160; , Welcome.</string>
+    <string name="placeholder_welcome">, Welcome.</string>
+    <string name="exceptions_subtitle">Allergens, food additives and more</string>
+    <string name="exceptions_title">Choose Exceptions</string>
 </resources>

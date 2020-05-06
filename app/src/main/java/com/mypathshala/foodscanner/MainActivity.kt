@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
@@ -18,9 +21,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     val auth = FirebaseAuth.getInstance()
+    private var tagsLayout: FlowLayout? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        tagsLayout = findViewById(R.id.allergen_items_flow_layout)
 
         checkLoginState()
 
@@ -57,6 +63,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showAllergensList() {
+        val allergensList = arrayOf("Fish", "Egg", "Meat", "Chicken", "Brinjal")
+        for (item in allergensList) {
+            val tagView = LayoutInflater.from(tagsLayout?.context)
+                .inflate(R.layout.allergen_item_layout, tagsLayout, false) as FrameLayout
+            val tvTagName = tagView.findViewById<TextView>(R.id.allergen_name)
+            tvTagName.text = item
+
+            tagsLayout?.addView(tagView)
+        }
+
+    }
+
     private fun onUserLogin() {
         //Updating the user login status with user name
         user_status_tv?.text =
@@ -74,6 +93,8 @@ class MainActivity : AppCompatActivity() {
         signout_button?.setOnClickListener {
             signOut()
         }
+
+        showAllergensList()
     }
 
     private fun checkLoginState() {
