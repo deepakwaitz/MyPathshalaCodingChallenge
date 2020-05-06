@@ -1,21 +1,27 @@
 package com.mypathshala.foodscanner
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder
-import com.facebook.drawee.generic.RoundingParams
 import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        private const val RC_SIGN_IN = 123
+    }
+
     val auth = FirebaseAuth.getInstance()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         checkLoginState()
 
         // Access a Cloud Firestore instance from your Activity
@@ -35,16 +41,6 @@ class MainActivity : AppCompatActivity() {
              }*/
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (auth.currentUser != null) {
-            // already signed in
-            onUserLogin()
-        } else {
-            onUserLogout()
-        }
-    }
-
     private fun onUserLogout() {
         //Updating the user login status as guest user
         user_status_tv?.text = getString(R.string.placeholder_guest_user)
@@ -53,15 +49,11 @@ class MainActivity : AppCompatActivity() {
         user_avatar?.setImageURI("")
 
         //Updating views visibility
-        showSignInView()
-    }
-
-    private fun showSignInView() {
         signout_button?.visibility = View.GONE
         signin_button?.visibility = View.VISIBLE
 
         signin_button?.setOnClickListener {
-            traversToLoginScreen()
+            createSignInIntent()
         }
     }
 
@@ -72,15 +64,7 @@ class MainActivity : AppCompatActivity() {
                 R.string.placeholder_welcome
             )
 
-        //Setting user avatar as a circular image
-        val roundingParams = RoundingParams.fromCornersRadius(7f)
-            .setBorder(resources.getColor(R.color.blue_color), 1.0f)
-            .setRoundAsCircle(true)
-
-        user_avatar?.hierarchy = GenericDraweeHierarchyBuilder(resources)
-            .setRoundingParams(roundingParams)
-            .build()
-
+        //Setting user avatar
         if (auth.currentUser?.photoUrl != null)
             user_avatar?.setImageURI(auth.currentUser?.photoUrl)
         //Setting views visibility
@@ -96,23 +80,74 @@ class MainActivity : AppCompatActivity() {
         if (auth.currentUser != null) {
             onUserLogin()
         } else {
-            // not signed in, navigate to login screen
-            traversToLoginScreen()
+            onUserLogout()
+            createSignInIntent()
         }
     }
 
     private fun signOut() {
-        // [START auth_fui_signout]
         AuthUI.getInstance()
             .signOut(this)
             .addOnCompleteListener {
-                //traversToLoginScreen()
-                showSignInView()
+                onUserLogout()
             }
     }
 
-    private fun traversToLoginScreen() {
-        val loginIntent: Intent = Intent(this, LoginActivity::class.java)
-        startActivity(loginIntent)
+    private fun createSignInIntent() {
+        // Authentication providers
+        val providers = arrayListOf(
+            AuthUI.IdpConfig.EmailBuilder().build(),
+            AuthUI.IdpConfig.GoogleBuilder().build(),
+            AuthUI.IdpConfig.FacebookBuilder().build(),
+            AuthUI.IdpConfig.TwitterBuilder().build()
+        )
+
+        // Create and launch sign-in intent
+        startActivityForResult(
+            AuthUI.getInstance()
+                .createSignInIntentBuilder()
+                .setAvailableProviders(providers)
+                .setIsSmartLockEnabled(false)
+                .setLogo(R.drawable.ic_food_scanner_logo)
+                .setTosAndPrivacyPolicyUrls(
+                    getString(R.string.toc_url),
+                    getString(R.string.privacy_policy_url)
+                )
+                .build(),
+            RC_SIGN_IN
+        )
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val response = IdpResponse.fromResultIntent(data)
+
+            if (resultCode == Activity.RESULT_OK) {
+                // Successfully signed in
+                onUserLogin()
+                val user = FirebaseAuth.getInstance().currentUser
+                // ...
+            } else {
+                //showSnackbar(R.string.unknown_error);
+                Log.d("Sign in failed - ", " " + response?.error?.message)
+                // Sign in failed. If response is null the user canceled the
+                // sign-in flow using the back button. Otherwise check
+                // response.getError().getErrorCode() and handle the error.
+                // ...
+            }
+        }
+    }
+
+
+    private fun delete() {
+        // [START auth_fui_delete]
+        AuthUI.getInstance()
+            .delete(this)
+            .addOnCompleteListener {
+                // ...
+            }
+        // [END auth_fui_delete]
     }
 }

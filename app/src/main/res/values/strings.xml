@@ -14,6 +14,6 @@
     <string name="placeholder_sign_in">Sign In</string>
     <string name="placeholder_login_status">Hi, Deepak Ramalingam. Welcome.</string>
     <string name="placeholder_guest_user">Guest User</string>
-    <string name="placeholder_hi">\"Hi \"</string>
-    <string name="placeholder_welcome">\" , Welcome.\"</string>
+    <string name="placeholder_hi">Hi &#160;</string>
+    <string name="placeholder_welcome">&#160; , Welcome.</string>
 </resources>
