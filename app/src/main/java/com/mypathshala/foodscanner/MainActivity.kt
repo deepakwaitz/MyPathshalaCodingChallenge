@@ -23,13 +23,14 @@ import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity :  AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
     val TAG: String = MainActivity::class.java.simpleName
 
     companion object {
         private const val RC_SIGN_IN = 123
         const val FIRESTORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
         const val FIRESTORE_DOCUMENT_KEY = "allergic"
+        const val IS_BARCODE_SCANNER = "is_barcode_scanner"
     }
 
     private val auth = FirebaseAuth.getInstance()
@@ -86,6 +87,7 @@ class MainActivity :  AppCompatActivity() {
 
         scan_button?.setOnClickListener {
             val cameraIntent = Intent(this, CameraActivity::class.java)
+            cameraIntent.putExtra(IS_BARCODE_SCANNER, true)
             startActivity(cameraIntent)
         }
 

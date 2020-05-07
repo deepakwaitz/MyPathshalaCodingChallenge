@@ -42,8 +42,9 @@ class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolea
         textRecognizer.processImage(firebaseVisionImage)
             .addOnSuccessListener { firebaseVisionText ->
                 if (!TextUtils.isEmpty(firebaseVisionText.text) && !alreadyDetected) {
+                    alreadyDetected = true
                     Log.d(TAG, "### " + firebaseVisionText.text)
-                    scannerCallBack.onScanComplete(firebaseVisionText.text)
+                    scannerCallBack.onTextScanComplete(firebaseVisionText.text)
                 }
             }
             .addOnFailureListener { e ->
@@ -60,7 +61,7 @@ class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolea
             .addOnSuccessListener { barcodes ->
                 if (!barcodes.isNullOrEmpty() && !alreadyDetected) {
                     alreadyDetected = true
-                    barcodes[0].displayValue?.let { scannerCallBack.onScanComplete(it) }
+                    barcodes[0].displayValue?.let { scannerCallBack.onBarCodeScanComplete(it) }
                 }
             }
             .addOnFailureListener {

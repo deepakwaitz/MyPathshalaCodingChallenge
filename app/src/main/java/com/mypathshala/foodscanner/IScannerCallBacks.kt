@@ -1,5 +1,6 @@
 package com.mypathshala.foodscanner
 
 interface IScannerCallBacks {
-    fun onScanComplete(text: String)
+    fun onBarCodeScanComplete(barcode: String)
+    fun onTextScanComplete(text: String)
 }

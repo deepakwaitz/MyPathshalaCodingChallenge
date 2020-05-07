@@ -21,6 +21,10 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
     val TAG: String = CameraActivity::class.java.simpleName
     private val activity: Activity = this
     private lateinit var preview: Preview
+    private var isBarCodeScanner = true
+    private var barCode: String? = null
+    private var productName: String? = null
+
 
     // This is an array of all the permission specified in the manifest.
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -29,6 +33,10 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
         viewFinder = findViewById(R.id.view_finder)
+
+        isBarCodeScanner = intent.getBooleanExtra(MainActivity.IS_BARCODE_SCANNER, true)
+        barCode = intent.getStringExtra(BARCODE_BUNDLE_KEY)
+        productName = intent.getStringExtra(PRODUCT_NAME_BUNDLE_KEY)
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -81,7 +89,7 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
 
         // Build the image analysis use case and instantiate our analyzer
         val analyzerUseCase = ImageAnalysis(analyzerConfig).apply {
-            setAnalyzer(executor, ImageAnalyzer(activity, true))
+            setAnalyzer(executor, ImageAnalyzer(activity, isBarCodeScanner))
         }
 
         CameraX.bindToLifecycle(this, preview, analyzerUseCase)
@@ -141,14 +149,27 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
         const val BARCODE_BUNDLE_KEY = "barcode"
+        const val PRODUCT_NAME_BUNDLE_KEY = "product_name"
+        const val INGREDIENTS_TEXT_BUNDLE_KEY = "ingredients"
     }
 
-    override fun onScanComplete(text: String) {
+    override fun onBarCodeScanComplete(barcodeID: String) {
         CameraX.unbindAll()
         /*Calling ProductActivity*/
-
         val productIntent = Intent(this, ProductActivity::class.java)
-        productIntent.putExtra(BARCODE_BUNDLE_KEY, text)
+        productIntent.putExtra(BARCODE_BUNDLE_KEY, barcodeID)
+        productIntent.putExtra(INGREDIENTS_TEXT_BUNDLE_KEY, "")
+        startActivity(productIntent)
+        finish()
+    }
+
+    override fun onTextScanComplete(text: String) {
+        CameraX.unbindAll()
+        /*Calling ProductActivity*/
+        val productIntent = Intent(this, ProductActivity::class.java)
+        productIntent.putExtra(BARCODE_BUNDLE_KEY, barCode)
+        productIntent.putExtra(INGREDIENTS_TEXT_BUNDLE_KEY, text)
+        productIntent.putExtra(PRODUCT_NAME_BUNDLE_KEY, productName)
         startActivity(productIntent)
         finish()
     }

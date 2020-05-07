@@ -1,6 +1,7 @@
 package com.mypathshala.foodscanner
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
@@ -11,6 +12,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.mypathshala.foodscanner.CameraActivity.Companion.BARCODE_BUNDLE_KEY
+import com.mypathshala.foodscanner.CameraActivity.Companion.PRODUCT_NAME_BUNDLE_KEY
 import com.mypathshala.foodscanner.MainActivity.Companion.FIRESTORE_COLLECTION_ALLERGENS_PROFILE
 import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
@@ -27,6 +29,8 @@ class ProductActivity : AppCompatActivity() {
     }
 
     private var barCode: String? = null
+    private var scannedIngredients: String? = ""
+    private var updatedProductName: String? = null
 
     private val auth = FirebaseAuth.getInstance()
     private val fireStoreDB = Firebase.firestore
@@ -36,8 +40,22 @@ class ProductActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product)
-
         barCode = intent.getStringExtra(BARCODE_BUNDLE_KEY)
+        scannedIngredients = intent.getStringExtra(CameraActivity.INGREDIENTS_TEXT_BUNDLE_KEY)
+        updatedProductName = intent.getStringExtra(CameraActivity.PRODUCT_NAME_BUNDLE_KEY)
+
+        product_name_edit_text?.setText(updatedProductName)
+
+        // product_ingredient_edit_text?.setText(scannedIngredients)
+        ingredient_scan_button?.setOnClickListener {
+            updatedProductName = product_name_edit_text?.text.toString()
+            val cameraIntent = Intent(this, CameraActivity::class.java)
+            cameraIntent.putExtra(MainActivity.IS_BARCODE_SCANNER, false)
+            cameraIntent.putExtra(PRODUCT_NAME_BUNDLE_KEY, updatedProductName)
+            cameraIntent.putExtra(BARCODE_BUNDLE_KEY, barCode)
+            startActivity(cameraIntent)
+            finish()
+        }
 
         if (!TextUtils.isEmpty(barCode)) {
             fireStoreAllergenDocReference =
@@ -94,8 +112,12 @@ class ProductActivity : AppCompatActivity() {
         val productName = result.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) as String
         val ingredients = result.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) as String
 
-        product_name_edit_text?.setText(productName)
-        product_ingredient_edit_text?.setText(ingredients)
+        if (!TextUtils.isEmpty(updatedProductName))
+            product_name_edit_text?.setText(updatedProductName)
+        else
+            product_name_edit_text?.setText(productName)
+
+        product_ingredient_edit_text?.setText(ingredients + scannedIngredients)
 
         add_update_product_button?.text = getString(R.string.placeholder_update)
 
