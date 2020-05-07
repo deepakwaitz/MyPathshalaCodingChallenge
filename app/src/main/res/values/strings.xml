@@ -39,4 +39,5 @@
     <string name="scan_note">Scan the ingredients from the product to auto fill</string>
     <string name="allergic_warning">This product is not good for you, it has ingredients which are allergic to you like, &#160;</string>
     <string name="no_allergic_warning">This product is safe for you, it doesnt have any ingredients which are allergic to you.</string>
+    <string name="placeholder_scanning">Scanning..</string>
 </resources>
