@@ -36,7 +36,7 @@ class ImageAnalyzer(val activity: Activity) : ImageAnalysis.Analyzer {
                             Log.d(TAG, "OnSuccess -" + barcode.displayValue)
                             barcode.displayValue?.let { mBarCodeListener.onBarCodeDetected(it) }
                             CameraX.unbindAll()
-                            activity.finish()
+                            //activity.finish()
                         }
                 }
                 .addOnFailureListener {

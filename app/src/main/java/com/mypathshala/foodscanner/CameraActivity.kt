@@ -9,6 +9,7 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.Toast
@@ -16,10 +17,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import kotlinx.android.synthetic.main.activity_camera.*
 import java.io.File
 import java.util.concurrent.Executors
 
-class CameraActivity : AppCompatActivity(), IBarcodeListener {
+class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
     val TAG: String = CameraActivity::class.java.simpleName
     private val activity: Activity = this
 
@@ -30,6 +33,7 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
         viewFinder = findViewById(R.id.view_finder)
+        viewFinder.visibility = View.VISIBLE
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -185,9 +189,31 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener {
         // request. Where an app has multiple context for requesting permission,
         // this can help differentiate the different contexts.
         private const val REQUEST_CODE_PERMISSIONS = 10
+        public const val BARCODE_BUNDLE_KEY = "barcode"
     }
 
     override fun onBarCodeDetected(displayCode: String) {
         Log.d(TAG, "Barcode received in CameraActivity -" + displayCode)
+        /*Adding ProductFragment Simply*/
+        val productFragment: Fragment = ProductFragment()
+        val barCodeBundle = Bundle()
+        barCodeBundle.putString(BARCODE_BUNDLE_KEY, displayCode)
+        productFragment.arguments = barCodeBundle
+
+        addFragment(productFragment, false)
+
+        viewFinder.visibility = View.GONE
+        capture_button?.visibility = View.GONE
+        fragmentsContainer?.visibility = View.VISIBLE
+    }
+
+    override fun addFragment(fragment: Fragment, addToBack: Boolean) {
+        val fragmentManager = supportFragmentManager
+
+        val fragmentTransaction = fragmentManager.beginTransaction()
+        if (addToBack)
+            fragmentTransaction.addToBackStack(fragment.tag)
+        fragmentTransaction.add(R.id.fragmentsContainer, fragment)
+        fragmentTransaction.commit()
     }
 }

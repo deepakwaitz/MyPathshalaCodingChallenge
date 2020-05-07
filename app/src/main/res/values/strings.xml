@@ -19,12 +19,15 @@
     <string name="exceptions_subtitle">Allergens, food additives and more</string>
     <string name="exceptions_title">Your Exceptions</string>
     <string name="placeholder_exceptions">Add Exception</string>
+    <string name="placeholder_unknown_product">UnKnown Product</string>
+    <string name="placeholder_unknown_product_message">Do you like to add the below project ?</string>
     <string name="placeholder_add">Add</string>
     <string name="placeholder_update">Update</string>
     <string name="placeholder_delete">Delete</string>
     <string name="placeholder_modify_exceptions">Modify Exception</string>
     <string name="placeholder_cancel">Cancel</string>
     <string name="error_msg">Oops something went wrong.Please Try again later.</string>
+    <string name="success_msg">Successfully Updated</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

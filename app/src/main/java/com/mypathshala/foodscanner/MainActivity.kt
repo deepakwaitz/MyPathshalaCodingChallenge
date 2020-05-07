@@ -25,10 +25,11 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
     val TAG: String = MainActivity::class.java.simpleName
+
     companion object {
         private const val RC_SIGN_IN = 123
-        private const val FIRESTORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
-        private const val FIRESTORE_DOCUMENT_KEY = "allergic"
+        const val FIRESTORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
+        const val FIRESTORE_DOCUMENT_KEY = "allergic"
     }
 
     private val auth = FirebaseAuth.getInstance()
