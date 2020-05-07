@@ -46,6 +46,9 @@ class MainActivity : AppCompatActivity() {
         checkLoginState()
     }
 
+    /**
+     * To check the login state, eight the user is logged or not. Only logged in users can access the app.
+     */
     private fun checkLoginState() {
         if (auth.currentUser != null) {
             onUserLogin()
@@ -56,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onUserLogin() {
+        //Creating firestore document with user uid value. So Every user will have the separate document.
         fireStoreDocumentReference =
             auth.currentUser?.uid?.let {
                 fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(
@@ -86,6 +90,7 @@ class MainActivity : AppCompatActivity() {
             showAddDialog()
         }
 
+        // To scan the barcode
         scan_button?.setOnClickListener {
             val cameraIntent = Intent(this, CameraActivity::class.java)
             cameraIntent.putExtra(IS_BARCODE_SCANNER, true)
@@ -95,6 +100,9 @@ class MainActivity : AppCompatActivity() {
         getExceptionData()
     }
 
+    /**
+     * Update the UI and reset the user specific values.
+     */
     private fun onUserLogout() {
         fireStoreDocumentReference = null
         allergenicList?.clear()
@@ -116,6 +124,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Display's the specific user's allergic profile by fetching the data from firestore.
+     */
     private fun showAllergensList() {
         exceptionLayout?.removeAllViews()
         if (!allergenicList.isNullOrEmpty()) {
@@ -135,6 +146,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * AlertDialog to add the exceptions(Allergens).
+     */
     private fun showAddDialog() {
         val exceptionAlertDialog = Builder(this)
 
@@ -157,6 +171,9 @@ class MainActivity : AppCompatActivity() {
         exceptionAlertDialog.show()
     }
 
+    /**
+     * On Tap of exception items user can update or delete the value.
+     */
     private fun showEditDeleteDialog(index: Int, item: String) {
         val exceptionAlertDialog = Builder(this)
 
@@ -185,6 +202,9 @@ class MainActivity : AppCompatActivity() {
         exceptionAlertDialog.show()
     }
 
+    /**
+     * Here we fetch the collection 'allergy_profile' and the respective document of the user. After fetching we show the items.
+     */
     private fun getExceptionData() {
         fireStoreDocumentReference?.get()
             ?.addOnSuccessListener { result ->
@@ -198,6 +218,9 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    /**
+     * Here we add the exceptions to the firestore db. Also works in offline
+     */
     private fun addExceptionData(enteredValue: String) {
         allergenicList?.add(enteredValue)
         //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
@@ -213,6 +236,9 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    /**
+     * This is to update the firestore listeners based on the network state.
+     */
     private fun setFireStoreDBNetworkState() {
         if (Utils.isConnected(this)) {
             fireStoreDB.enableNetwork()
@@ -225,6 +251,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Here we update/delete the exceptions to the firestore db. Also works in offline
+     */
     private fun modifyExceptionData() {
         //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
         setFireStoreDBNetworkState()
@@ -238,6 +267,9 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    /**
+     * Signout the user from firebase auth
+     */
     private fun signOut() {
         AuthUI.getInstance()
             .signOut(this)
@@ -246,12 +278,15 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    /**
+     * With the help of firebase auth-ui we are loading the login screen.
+     */
     private fun createSignInIntent() {
         // Authentication providers
         val providers = arrayListOf(
             AuthUI.IdpConfig.EmailBuilder().build(),
             AuthUI.IdpConfig.GoogleBuilder().build(),
-            AuthUI.IdpConfig.FacebookBuilder().build(),
+            AuthUI.IdpConfig.FacebookBuilder().build(),//TODO Facebook login is misbehaving, have to fit it.
             AuthUI.IdpConfig.TwitterBuilder().build()
         )
 

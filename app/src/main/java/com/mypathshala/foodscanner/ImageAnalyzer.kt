@@ -9,6 +9,9 @@ import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
 
+/**
+ * Here we have two types of image detectors, 'onDeviceTextRecognizer' for scanning the ingredients from the product, and 'visionBarcodeDetector' to scan the product barcode.
+ */
 class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolean) : ImageAnalysis.Analyzer {
     val TAG: String = ImageAnalyzer::class.java.simpleName
     var scannerCallBack: IScannerCallBacks = activity as IScannerCallBacks
@@ -28,6 +31,7 @@ class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolea
         if (mediaImage != null) {
             val firebaseVisionImage = FirebaseVisionImage.fromMediaImage(mediaImage, imageRotation)
 
+           /*Based on the boolean we choose the detector.*/
             if (isBarCodeScanner)
                 scanBarCode(firebaseVisionImage)
             else
@@ -35,10 +39,14 @@ class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolea
         }
     }
 
+    /**
+     * Recognize the text from the image. The result will not be accurate always, we have to edit it before uploading to db.
+     */
     private fun scanText(firebaseVisionImage: FirebaseVisionImage) {
         val textRecognizer = FirebaseVision.getInstance()
             .onDeviceTextRecognizer
 
+        //The 'analyze' function will be triggered multiple times. To avoid duplicate values we are maintaining the boolean 'alreadyDetected'.
         textRecognizer.processImage(firebaseVisionImage)
             .addOnSuccessListener { firebaseVisionText ->
                 if (!TextUtils.isEmpty(firebaseVisionText.text) && !alreadyDetected) {
@@ -52,10 +60,12 @@ class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolea
             }
     }
 
+    /**
+     * Scan's the barcode of any format and give the result as array of Barcode. Assuming we always scan one at a time we are always looking for the first barcode object.
+     */
     private fun scanBarCode(firebaseVisionImage: FirebaseVisionImage) {
         val barCodedDetector = FirebaseVision.getInstance()
             .visionBarcodeDetector
-
 
         barCodedDetector.detectInImage(firebaseVisionImage)
             .addOnSuccessListener { barcodes ->
