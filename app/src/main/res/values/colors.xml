@@ -7,4 +7,5 @@
     <color name="red_color">#E62630</color>
     <color name="green_color">#4CAF50</color>
     <color name="secondary_text_color">#929292</color>
+    <color name="border_color" type="color">#d8d8d8</color>
 </resources>

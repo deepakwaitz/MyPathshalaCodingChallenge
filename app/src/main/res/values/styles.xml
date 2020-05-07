@@ -8,4 +8,13 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="error_appearance" parent="@android:style/TextAppearance">
+        <item name="android:textColor">@color/red_color</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="AuthOutlinedBoxStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+        <item name="boxStrokeColor">@color/textinput_outlinedbox_color</item>
+        <item name="boxStrokeWidth">1dp</item>
+    </style>
 </resources>

@@ -23,7 +23,7 @@ import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity :  AppCompatActivity() {
     val TAG: String = MainActivity::class.java.simpleName
 
     companion object {

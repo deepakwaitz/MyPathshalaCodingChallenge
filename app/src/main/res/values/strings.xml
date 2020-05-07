@@ -20,7 +20,7 @@
     <string name="exceptions_title">Your Exceptions</string>
     <string name="placeholder_exceptions">Add Exception</string>
     <string name="placeholder_unknown_product">UnKnown Product</string>
-    <string name="placeholder_unknown_product_message">Do you like to add the below project ?</string>
+    <string name="placeholder_unknown_product_message">Do you like to add this product ?</string>
     <string name="placeholder_add">Add</string>
     <string name="placeholder_update">Update</string>
     <string name="placeholder_delete">Delete</string>
@@ -31,4 +31,8 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="product_name">Product Name</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="title_product_found">Product Found</string>
+    <string name="title_new_product">New Product</string>
 </resources>

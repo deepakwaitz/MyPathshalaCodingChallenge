@@ -3,21 +3,19 @@ package com.mypathshala.foodscanner
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.TextUtils
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.mypathshala.foodscanner.CameraActivity.Companion.BARCODE_BUNDLE_KEY
 import com.mypathshala.foodscanner.MainActivity.Companion.FIRESTORE_COLLECTION_ALLERGENS_PROFILE
 import com.mypathshala.foodscanner.utils.Utils
-import kotlinx.android.synthetic.main.fragment_product.*
+import kotlinx.android.synthetic.main.activity_product.*
 
-class ProductFragment : Fragment() {
-    val TAG: String = ProductFragment::class.java.simpleName
+class ProductActivity : AppCompatActivity() {
+    val TAG: String = ProductActivity::class.java.simpleName
 
     companion object {
         private const val FIRESTORE_COLLECTION_PRODUCTS = "products"
@@ -26,7 +24,6 @@ class ProductFragment : Fragment() {
     }
 
     private var barCode: String? = null
-    private val mContext = this.context
 
     private val auth = FirebaseAuth.getInstance()
     private val fireStoreDB = Firebase.firestore
@@ -35,23 +32,11 @@ class ProductFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    }
+        setContentView(R.layout.activity_product)
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_product, container, false)
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        barCode = arguments?.getString(BARCODE_BUNDLE_KEY)
+        barCode = intent.getStringExtra(BARCODE_BUNDLE_KEY)
 
         if (!TextUtils.isEmpty(barCode)) {
-            random?.text = barCode
-
             fireStoreAllergenDocReference =
                 auth.currentUser?.uid?.let { fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(it) }
 
@@ -61,12 +46,12 @@ class ProductFragment : Fragment() {
         }
     }
 
-    private fun addProduct() {
-        val ingredients: ArrayList<String>? = arrayListOf("sugar", "nuts")
-        val product = hashMapOf(FIRESTORE_DOCUMENT_KEY_NAME to barCode, FIRESTORE_DOCUMENT_KEY_INGREDIENTS to ingredients)
+    private fun addUpdateProduct(productName: String, ingredients: String) {
+        val product = hashMapOf(FIRESTORE_DOCUMENT_KEY_NAME to productName, FIRESTORE_DOCUMENT_KEY_INGREDIENTS to ingredients)
         fireStoreProductDocReference?.set(product)
             ?.addOnSuccessListener {
                 Utils.showSnackBar(product_container, getString(R.string.success_msg))
+                finish()
             }
             ?.addOnFailureListener { e ->
                 Utils.showSnackBar(product_container, getString(R.string.error_msg))
@@ -79,8 +64,7 @@ class ProductFragment : Fragment() {
         fireStoreProductDocReference?.get()
             ?.addOnSuccessListener { result ->
                 if (result?.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) != null) {
-                    productName = result?.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) as String
-                    Utils.showSnackBar(product_container, productName)
+                    onProductFound(result)
                     checkForAllergens()
                 } else {
                     Utils.showSnackBar(product_container, "Product Not Found")
@@ -93,6 +77,24 @@ class ProductFragment : Fragment() {
             }
     }
 
+    private fun onProductFound(result: DocumentSnapshot) {
+        page_title?.text = getString(R.string.title_product_found)
+
+        val productName = result.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) as String
+        val ingredients = result.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) as String
+
+        product_name_edit_text?.setText(productName)
+        product_ingredient_edit_text?.setText(ingredients)
+
+        add_update_product_button?.text = getString(R.string.placeholder_update)
+
+        add_update_product_button?.setOnClickListener {
+            val updatedProductName = product_name_edit_text?.text.toString()
+            val updatedIngredients = product_ingredient_edit_text?.text.toString()
+            addUpdateProduct(updatedProductName, updatedIngredients)
+        }
+    }
+
     private fun checkForAllergens() {
         var allergenicList: ArrayList<String>? = arrayListOf()
 
@@ -101,7 +103,7 @@ class ProductFragment : Fragment() {
             ?.addOnSuccessListener { result ->
                 if (result?.data?.get(MainActivity.FIRESTORE_DOCUMENT_KEY) != null) {
                     allergenicList = result?.data?.get(MainActivity.FIRESTORE_DOCUMENT_KEY) as ArrayList<String>
-                    /*Fetching product's inredients list*/
+                    /*Fetching product's inredients*/
                     fetchIngredients(allergenicList)
                 }
             }
@@ -111,12 +113,12 @@ class ProductFragment : Fragment() {
     }
 
     private fun fetchIngredients(allergenicList: ArrayList<String>?) {
-        var ingredientsList: ArrayList<String>? = arrayListOf()
+        var ingredients: String
         fireStoreProductDocReference?.get()
             ?.addOnSuccessListener { result ->
                 if (result?.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) != null) {
-                    ingredientsList = result?.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) as ArrayList<String>
-                    isAllergic(allergenicList, ingredientsList)
+                    ingredients = result.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) as String
+                    isAllergic(allergenicList, ingredients)
                 }
             }
             ?.addOnFailureListener { exception ->
@@ -124,19 +126,14 @@ class ProductFragment : Fragment() {
             }
     }
 
-    private fun isAllergic(allergenicList: ArrayList<String>?, ingredientsList: ArrayList<String>?) {
+    private fun isAllergic(allergenicList: ArrayList<String>?, ingredients: String?) {
         var isAllergic = false
-        if (!allergenicList.isNullOrEmpty() && !ingredientsList.isNullOrEmpty()) {
+        if (!allergenicList.isNullOrEmpty() && !TextUtils.isEmpty(ingredients)) {
             for (allergen in allergenicList) {
-                if (!isAllergic) {
-                    for (ingredient in ingredientsList) {
-                        if (allergen.equals(ingredient,true)) {
-                            isAllergic = true
-                            break
-                        }
-                    }
-                } else
+                if (ingredients.toString().contains(allergen, true)) {
+                    isAllergic = true
                     break
+                }
             }
         }
 
@@ -148,7 +145,7 @@ class ProductFragment : Fragment() {
 
 
     private fun showAddProductDialog() {
-        val exceptionAlertDialog = AlertDialog.Builder(this.activity)
+        val exceptionAlertDialog = AlertDialog.Builder(this)
 
         exceptionAlertDialog.setTitle(getString(R.string.placeholder_unknown_product))
         exceptionAlertDialog.setMessage(getString(R.string.placeholder_unknown_product_message))
@@ -156,13 +153,26 @@ class ProductFragment : Fragment() {
         exceptionAlertDialog.setPositiveButton(
             getString(R.string.placeholder_add)
         ) { _, _ ->
-            addProduct()
+
+            onAddProduct()
+
         }
 
         exceptionAlertDialog.setNegativeButton(
             getString(R.string.placeholder_cancel)
         ) { _, _ ->
+            finish()
         }
         exceptionAlertDialog.show()
+    }
+
+    private fun onAddProduct() {
+        page_title?.text = getString(R.string.title_new_product)
+
+        add_update_product_button?.setOnClickListener {
+            val productName = product_name_edit_text?.text.toString()
+            val ingredients = product_ingredient_edit_text?.text.toString()
+            addUpdateProduct(productName, ingredients)
+        }
     }
 }

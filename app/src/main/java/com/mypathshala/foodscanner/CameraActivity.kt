@@ -2,29 +2,25 @@ package com.mypathshala.foodscanner
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Matrix
 import android.os.Bundle
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
-import kotlinx.android.synthetic.main.activity_camera.*
-import java.io.File
 import java.util.concurrent.Executors
 
-class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
+class CameraActivity : AppCompatActivity(), IScannerCallBacks {
     val TAG: String = CameraActivity::class.java.simpleName
     private val activity: Activity = this
+    private lateinit var preview: Preview
 
     // This is an array of all the permission specified in the manifest.
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -33,7 +29,6 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
         viewFinder = findViewById(R.id.view_finder)
-        viewFinder.visibility = View.VISIBLE
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -61,7 +56,7 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
 
 
         // Build the viewfinder use case
-        val preview = Preview(previewConfig)
+        preview = Preview(previewConfig)
 
         // Every time the viewfinder is updated, recompute layout
         preview.setOnPreviewOutputUpdateListener {
@@ -75,47 +70,6 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
             updateTransform()
         }
 
-        // Create configuration object for the image capture use case
-        val imageCaptureConfig = ImageCaptureConfig.Builder()
-            .apply {
-                // We don't set a resolution for image capture; instead, we
-                // select a capture mode which will infer the appropriate
-                // resolution based on aspect ration and requested mode
-                setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
-            }.build()
-
-        // Build the image capture use case and attach button click listener
-        val imageCapture = ImageCapture(imageCaptureConfig)
-        findViewById<ImageButton>(R.id.capture_button).setOnClickListener {
-            val file = File(
-                externalMediaDirs.first(),
-                "${System.currentTimeMillis()}.jpg"
-            )
-
-            imageCapture.takePicture(file, executor,
-                object : ImageCapture.OnImageSavedListener {
-                    override fun onError(
-                        imageCaptureError: ImageCapture.ImageCaptureError,
-                        message: String,
-                        exc: Throwable?
-                    ) {
-                        val msg = "Photo capture failed: $message"
-                        Log.e("CameraXApp", msg, exc)
-                        viewFinder.post {
-                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    override fun onImageSaved(file: File) {
-                        val msg = "Photo capture succeeded: ${file.absolutePath}"
-                        Log.d("CameraXApp", msg)
-                        viewFinder.post {
-                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                })
-        }
-
         // Setup image analysis pipeline that computes average pixel luminance
         val analyzerConfig = ImageAnalysisConfig.Builder().apply {
             // In our analysis, we care more about the latest image than
@@ -127,7 +81,7 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
 
         // Build the image analysis use case and instantiate our analyzer
         val analyzerUseCase = ImageAnalysis(analyzerConfig).apply {
-            setAnalyzer(executor, ImageAnalyzer(activity))
+            setAnalyzer(executor, ImageAnalyzer(activity, true))
         }
 
         CameraX.bindToLifecycle(this, preview, analyzerUseCase)
@@ -185,35 +139,17 @@ class CameraActivity : AppCompatActivity(), IBarcodeListener, FragmentCallBack {
     }
 
     companion object {
-        // This is an arbitrary number we are using to keep track of the permission
-        // request. Where an app has multiple context for requesting permission,
-        // this can help differentiate the different contexts.
         private const val REQUEST_CODE_PERMISSIONS = 10
-        public const val BARCODE_BUNDLE_KEY = "barcode"
+        const val BARCODE_BUNDLE_KEY = "barcode"
     }
 
-    override fun onBarCodeDetected(displayCode: String) {
-        Log.d(TAG, "Barcode received in CameraActivity -" + displayCode)
-        /*Adding ProductFragment Simply*/
-        val productFragment: Fragment = ProductFragment()
-        val barCodeBundle = Bundle()
-        barCodeBundle.putString(BARCODE_BUNDLE_KEY, displayCode)
-        productFragment.arguments = barCodeBundle
+    override fun onScanComplete(text: String) {
+        CameraX.unbindAll()
+        /*Calling ProductActivity*/
 
-        addFragment(productFragment, false)
-
-        viewFinder.visibility = View.GONE
-        capture_button?.visibility = View.GONE
-        fragmentsContainer?.visibility = View.VISIBLE
-    }
-
-    override fun addFragment(fragment: Fragment, addToBack: Boolean) {
-        val fragmentManager = supportFragmentManager
-
-        val fragmentTransaction = fragmentManager.beginTransaction()
-        if (addToBack)
-            fragmentTransaction.addToBackStack(fragment.tag)
-        fragmentTransaction.add(R.id.fragmentsContainer, fragment)
-        fragmentTransaction.commit()
+        val productIntent = Intent(this, ProductActivity::class.java)
+        productIntent.putExtra(BARCODE_BUNDLE_KEY, text)
+        startActivity(productIntent)
+        finish()
     }
 }

@@ -1,17 +1,18 @@
 package com.mypathshala.foodscanner
 
 import android.app.Activity
+import android.text.TextUtils
 import android.util.Log
-import androidx.camera.core.CameraX
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
 
-class ImageAnalyzer(val activity: Activity) : ImageAnalysis.Analyzer {
+class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolean) : ImageAnalysis.Analyzer {
     val TAG: String = ImageAnalyzer::class.java.simpleName
-    var mBarCodeListener: IBarcodeListener = activity as IBarcodeListener
+    var scannerCallBack: IScannerCallBacks = activity as IScannerCallBacks
+    var alreadyDetected = false
 
     private fun degreesToFirebaseRotation(degrees: Int): Int = when (degrees) {
         0 -> FirebaseVisionImageMetadata.ROTATION_0
@@ -26,23 +27,44 @@ class ImageAnalyzer(val activity: Activity) : ImageAnalysis.Analyzer {
         val imageRotation = degreesToFirebaseRotation(rotationDegrees)
         if (mediaImage != null) {
             val firebaseVisionImage = FirebaseVisionImage.fromMediaImage(mediaImage, imageRotation)
-            val detector = FirebaseVision.getInstance()
-                .visionBarcodeDetector
 
-            val result = detector.detectInImage(firebaseVisionImage)
-                .addOnSuccessListener { barcodes ->
-                    if (!barcodes.isNullOrEmpty())
-                        for (barcode in barcodes) {
-                            Log.d(TAG, "OnSuccess -" + barcode.displayValue)
-                            barcode.displayValue?.let { mBarCodeListener.onBarCodeDetected(it) }
-                            CameraX.unbindAll()
-                            //activity.finish()
-                        }
-                }
-                .addOnFailureListener {
-                    Log.d(TAG, "OnFailure -")
-                }
-
+            if (isBarCodeScanner)
+                scanBarCode(firebaseVisionImage)
+            else
+                scanText(firebaseVisionImage)
         }
+    }
+
+    private fun scanText(firebaseVisionImage: FirebaseVisionImage) {
+        val textRecognizer = FirebaseVision.getInstance()
+            .onDeviceTextRecognizer
+
+        textRecognizer.processImage(firebaseVisionImage)
+            .addOnSuccessListener { firebaseVisionText ->
+                if (!TextUtils.isEmpty(firebaseVisionText.text) && !alreadyDetected) {
+                    Log.d(TAG, "### " + firebaseVisionText.text)
+                    scannerCallBack.onScanComplete(firebaseVisionText.text)
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.d(TAG, "OnFailure -")
+            }
+    }
+
+    private fun scanBarCode(firebaseVisionImage: FirebaseVisionImage) {
+        val barCodedDetector = FirebaseVision.getInstance()
+            .visionBarcodeDetector
+
+
+        barCodedDetector.detectInImage(firebaseVisionImage)
+            .addOnSuccessListener { barcodes ->
+                if (!barcodes.isNullOrEmpty() && !alreadyDetected) {
+                    alreadyDetected = true
+                    barcodes[0].displayValue?.let { scannerCallBack.onScanComplete(it) }
+                }
+            }
+            .addOnFailureListener {
+                Log.d(TAG, "OnFailure -")
+            }
     }
 }
