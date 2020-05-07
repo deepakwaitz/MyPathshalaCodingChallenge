@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         allergen_profile_card_view?.visibility = View.VISIBLE
+        scanner_card_view?.visibility = View.VISIBLE
 
         add_allergen_button?.setOnClickListener {
             showAddDialog()
@@ -107,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         //Updating views visibility
         signout_button?.visibility = View.GONE
         allergen_profile_card_view?.visibility = View.GONE
+        scanner_card_view?.visibility = View.GONE
         signin_button?.visibility = View.VISIBLE
 
         signin_button?.setOnClickListener {
