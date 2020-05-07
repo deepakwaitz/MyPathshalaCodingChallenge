@@ -26,6 +26,7 @@
     <string name="placeholder_delete">Delete</string>
     <string name="placeholder_modify_exceptions">Modify Exception</string>
     <string name="placeholder_cancel">Cancel</string>
+    <string name="placeholder_ok">Ok</string>
     <string name="error_msg">Oops something went wrong.Please Try again later.</string>
     <string name="success_msg">Successfully Updated</string>
 
@@ -35,4 +36,7 @@
     <string name="ingredients">Ingredients</string>
     <string name="title_product_found">Product Found</string>
     <string name="title_new_product">New Product</string>
+    <string name="scan_note">Scan the ingredients from the product to auto fill</string>
+    <string name="allergic_warning">This product is not good for you, it has ingredients which are allergic to you like, &#160;</string>
+    <string name="no_allergic_warning">This product is safe for you, it doesnt have any ingredients which are allergic to you.</string>
 </resources>

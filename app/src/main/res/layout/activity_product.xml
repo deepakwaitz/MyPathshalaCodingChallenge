@@ -54,7 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Scan the ingredients from the product to auto fill"
+        android:text="@string/scan_note"
         android:textSize="14sp" />
 
     <com.google.android.material.textfield.TextInputLayout
@@ -90,6 +90,51 @@
         android:paddingVertical="10dp"
         android:text="@string/placeholder_btn_setup_allergy_profile"
         android:textColor="@android:color/white" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/allergen_note_card_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginVertical="20dp"
+        android:visibility="gone"
+        app:cardCornerRadius="4dp"
+        app:cardElevation="8dp">
+
+        <LinearLayout
+            android:id="@+id/allergic_warning_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/light_red_color"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/allergic_note_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="20dp"
+                android:text="@string/allergic_warning"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ok_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginVertical="10dp"
+                android:background="@drawable/green_background_drawable"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="10dp"
+                android:text="@string/placeholder_ok"
+                android:textColor="@android:color/white" />
+
+        </LinearLayout>
+
+
+    </androidx.cardview.widget.CardView>
 
 
 </LinearLayout>

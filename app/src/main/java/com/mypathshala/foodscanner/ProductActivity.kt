@@ -3,6 +3,7 @@ package com.mypathshala.foodscanner
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.TextUtils
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
@@ -12,6 +13,8 @@ import com.google.firebase.ktx.Firebase
 import com.mypathshala.foodscanner.CameraActivity.Companion.BARCODE_BUNDLE_KEY
 import com.mypathshala.foodscanner.MainActivity.Companion.FIRESTORE_COLLECTION_ALLERGENS_PROFILE
 import com.mypathshala.foodscanner.utils.Utils
+import com.mypathshala.foodscanner.utils.Utils.showSnackBar
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_product.*
 
 class ProductActivity : AppCompatActivity() {
@@ -48,29 +51,37 @@ class ProductActivity : AppCompatActivity() {
 
     private fun addUpdateProduct(productName: String, ingredients: String) {
         val product = hashMapOf(FIRESTORE_DOCUMENT_KEY_NAME to productName, FIRESTORE_DOCUMENT_KEY_INGREDIENTS to ingredients)
+
+        if (Utils.isConnected(this)) {
+            fireStoreDB.enableNetwork()
+        } else {
+            fireStoreDB.disableNetwork().addOnSuccessListener {
+                finish()
+            }.addOnFailureListener {
+                showSnackBar(main_container, getString(R.string.error_msg))
+            }
+        }
+
         fireStoreProductDocReference?.set(product)
             ?.addOnSuccessListener {
-                Utils.showSnackBar(product_container, getString(R.string.success_msg))
                 finish()
             }
             ?.addOnFailureListener { e ->
-                Utils.showSnackBar(product_container, getString(R.string.error_msg))
+                showSnackBar(product_container, getString(R.string.error_msg))
             }
     }
 
     private fun checkForProduct() {
         /*Fetching allergic list*/
-        var productName: String
         fireStoreProductDocReference?.get()
             ?.addOnSuccessListener { result ->
                 if (result?.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) != null) {
                     onProductFound(result)
                     checkForAllergens()
                 } else {
-                    Utils.showSnackBar(product_container, "Product Not Found")
+                    showSnackBar(product_container, "Product Not Found")
                     showAddProductDialog()
                 }
-
             }
             ?.addOnFailureListener { exception ->
 
@@ -108,7 +119,7 @@ class ProductActivity : AppCompatActivity() {
                 }
             }
             ?.addOnFailureListener { exception ->
-                Utils.showSnackBar(product_container, getString(R.string.error_msg))
+                showSnackBar(product_container, getString(R.string.error_msg))
             }
     }
 
@@ -122,25 +133,39 @@ class ProductActivity : AppCompatActivity() {
                 }
             }
             ?.addOnFailureListener { exception ->
-                Utils.showSnackBar(product_container, getString(R.string.error_msg))
+                showSnackBar(product_container, getString(R.string.error_msg))
             }
     }
 
     private fun isAllergic(allergenicList: ArrayList<String>?, ingredients: String?) {
         var isAllergic = false
+        var allergicIngredients: String = ""
         if (!allergenicList.isNullOrEmpty() && !TextUtils.isEmpty(ingredients)) {
             for (allergen in allergenicList) {
                 if (ingredients.toString().contains(allergen, true)) {
                     isAllergic = true
-                    break
+                    allergicIngredients += allergen
                 }
             }
         }
 
-        if (isAllergic)
-            Utils.showSnackBar(product_container, "Is Allergic")
-        else
-            Utils.showSnackBar(product_container, "Not Allergic")
+        if (isAllergic) {
+            allergen_note_card_view?.visibility = View.VISIBLE
+            allergic_warning_layout?.setBackgroundColor(resources.getColor(R.color.light_red_color))
+            allergic_note_tv?.text = getString(R.string.allergic_warning) + allergicIngredients
+            ok_button?.setOnClickListener {
+                finish()
+            }
+        } else {
+            allergen_note_card_view?.visibility = View.VISIBLE
+            allergic_warning_layout?.setBackgroundColor(resources.getColor(R.color.border_color))
+            allergic_note_tv?.text = getString(R.string.no_allergic_warning)
+            allergic_note_tv?.setTextColor(resources.getColor(R.color.colorPrimaryDark))
+            ok_button?.setOnClickListener {
+                finish()
+            }
+        }
+
     }
 
 
