@@ -31,6 +31,7 @@ class ProductActivity : AppCompatActivity() {
     private var barCode: String? = null
     private var scannedIngredients: String? = ""
     private var updatedProductName: String? = null
+    private var isFromTextScan: Boolean = false
 
     private val auth = FirebaseAuth.getInstance()
     private val fireStoreDB = Firebase.firestore
@@ -43,6 +44,7 @@ class ProductActivity : AppCompatActivity() {
         barCode = intent.getStringExtra(BARCODE_BUNDLE_KEY)
         scannedIngredients = intent.getStringExtra(CameraActivity.INGREDIENTS_TEXT_BUNDLE_KEY)
         updatedProductName = intent.getStringExtra(CameraActivity.PRODUCT_NAME_BUNDLE_KEY)
+        isFromTextScan = intent.getBooleanExtra(CameraActivity.IS_TEXT_SCAN, false)
 
         product_name_edit_text?.setText(updatedProductName)
 
@@ -96,6 +98,10 @@ class ProductActivity : AppCompatActivity() {
                 if (result?.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) != null) {
                     onProductFound(result)
                     checkForAllergens()
+                } else if (isFromTextScan) {
+                    product_name_edit_text?.setText(updatedProductName)
+                    product_ingredient_edit_text?.setText(scannedIngredients)
+                    onAddProduct()
                 } else {
                     showSnackBar(product_container, "Product Not Found")
                     showAddProductDialog()

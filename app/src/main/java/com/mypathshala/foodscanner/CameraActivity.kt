@@ -151,6 +151,7 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
         const val BARCODE_BUNDLE_KEY = "barcode"
         const val PRODUCT_NAME_BUNDLE_KEY = "product_name"
         const val INGREDIENTS_TEXT_BUNDLE_KEY = "ingredients"
+        const val IS_TEXT_SCAN = "text_scan"
     }
 
     override fun onBarCodeScanComplete(barcodeID: String) {
@@ -159,6 +160,7 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
         val productIntent = Intent(this, ProductActivity::class.java)
         productIntent.putExtra(BARCODE_BUNDLE_KEY, barcodeID)
         productIntent.putExtra(INGREDIENTS_TEXT_BUNDLE_KEY, "")
+        productIntent.putExtra(IS_TEXT_SCAN, false)
         startActivity(productIntent)
         finish()
     }
@@ -170,6 +172,7 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
         productIntent.putExtra(BARCODE_BUNDLE_KEY, barCode)
         productIntent.putExtra(INGREDIENTS_TEXT_BUNDLE_KEY, text)
         productIntent.putExtra(PRODUCT_NAME_BUNDLE_KEY, productName)
+        productIntent.putExtra(IS_TEXT_SCAN, true)
         startActivity(productIntent)
         finish()
     }
