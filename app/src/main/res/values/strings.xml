@@ -24,4 +24,5 @@
     <string name="placeholder_delete">Delete</string>
     <string name="placeholder_modify_exceptions">Modify Exception</string>
     <string name="placeholder_cancel">Cancel</string>
+    <string name="error_msg">Oops something went wrong.Please Try again later.</string>
 </resources>

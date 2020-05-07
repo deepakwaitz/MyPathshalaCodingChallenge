@@ -18,15 +18,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.mypathshala.foodscanner.utils.Utils
+import com.mypathshala.foodscanner.utils.Utils.showSnackBar
 import kotlinx.android.synthetic.main.activity_main.*
-
 
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val RC_SIGN_IN = 123
         private const val FIRESTORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
         private const val FIRESTORE_DOCUMENT_KEY = "allergic"
-
     }
 
     private val auth = FirebaseAuth.getInstance()
@@ -38,71 +38,51 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         exceptionLayout = findViewById(R.id.allergen_items_flow_layout)
-
         checkLoginState()
     }
 
-    private fun addExceptionData(enteredValue: String) {
-        allergenicList?.add(enteredValue)
-
-        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
-        fireStoreDocumentReference?.set(allergic)
-            ?.addOnSuccessListener {
-                showAllergensList()
-            }
-            ?.addOnFailureListener { e ->
-                Log.w("OnFailureListener", "Error adding document", e)
-            }
+    private fun checkLoginState() {
+        if (auth.currentUser != null) {
+            onUserLogin()
+        } else {
+            onUserLogout()
+            createSignInIntent()
+        }
     }
 
-    private fun modifyExceptionData() {
-        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
-        fireStoreDocumentReference?.set(allergic)
-            ?.addOnSuccessListener {
-                showAllergensList()
+    private fun onUserLogin() {
+        fireStoreDocumentReference =
+            auth.currentUser?.uid?.let {
+                fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(
+                    it
+                )
             }
-            ?.addOnFailureListener { e ->
-                Log.w("OnFailureListener", "Error adding document", e)
-            }
-    }
+        //Updating the user login status with user name
+        user_status_tv?.text =
+            getString(R.string.placeholder_hi) + auth.currentUser?.displayName + getString(
+                R.string.placeholder_welcome
+            )
 
-    private fun showAddDialog() {
-        val exceptionAlertDialog = Builder(this)
+        //Setting user avatar
+        if (auth.currentUser?.photoUrl != null)
+            user_avatar?.setImageURI(auth.currentUser?.photoUrl)
+        //Setting views visibility
+        signout_button?.visibility = View.VISIBLE
+        signin_button?.visibility = View.GONE
 
-        val inputText = EditText(this)
-        exceptionAlertDialog.setTitle(getString(R.string.placeholder_exceptions))
-        exceptionAlertDialog.setView(inputText)
-
-        exceptionAlertDialog.setPositiveButton(
-            getString(R.string.placeholder_add)
-        ) { _, _ ->
-            val enteredValue = inputText.text.toString()
-            if (!TextUtils.isEmpty(enteredValue))
-                addExceptionData(enteredValue)
+        signout_button?.setOnClickListener {
+            signOut()
         }
 
-        exceptionAlertDialog.setNegativeButton(
-            getString(R.string.placeholder_cancel)
-        ) { _, _ ->
+        allergen_profile_card_view?.visibility = View.VISIBLE
+
+        add_allergen_button?.setOnClickListener {
+            showAddDialog()
         }
-        exceptionAlertDialog.show()
-    }
 
-    private fun getExceptionData() {
-        fireStoreDocumentReference?.get()
-            ?.addOnSuccessListener { result ->
-                if (result?.data?.get(FIRESTORE_DOCUMENT_KEY) != null) {
-                    allergenicList = result?.data?.get(FIRESTORE_DOCUMENT_KEY) as ArrayList<String>
-                    showAllergensList()
-                }
-            }
-            ?.addOnFailureListener { exception ->
-                Log.w("OnFailureListener", "Error getting documents.", exception)
-            }
+        getExceptionData()
     }
-
 
     private fun onUserLogout() {
         fireStoreDocumentReference = null
@@ -143,6 +123,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showAddDialog() {
+        val exceptionAlertDialog = Builder(this)
+
+        val inputText = EditText(this)
+        exceptionAlertDialog.setTitle(getString(R.string.placeholder_exceptions))
+        exceptionAlertDialog.setView(inputText)
+
+        exceptionAlertDialog.setPositiveButton(
+            getString(R.string.placeholder_add)
+        ) { _, _ ->
+            val enteredValue = inputText.text.toString()
+            if (!TextUtils.isEmpty(enteredValue))
+                addExceptionData(enteredValue)
+        }
+
+        exceptionAlertDialog.setNegativeButton(
+            getString(R.string.placeholder_cancel)
+        ) { _, _ ->
+        }
+        exceptionAlertDialog.show()
+    }
+
     private fun showEditDeleteDialog(index: Int, item: String) {
         val exceptionAlertDialog = Builder(this)
 
@@ -171,46 +173,51 @@ class MainActivity : AppCompatActivity() {
         exceptionAlertDialog.show()
     }
 
-    private fun onUserLogin() {
-        fireStoreDocumentReference =
-            auth.currentUser?.uid?.let {
-                fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(
-                    it
-                )
+    private fun getExceptionData() {
+        fireStoreDocumentReference?.get()
+            ?.addOnSuccessListener { result ->
+                if (result?.data?.get(FIRESTORE_DOCUMENT_KEY) != null) {
+                    allergenicList = result?.data?.get(FIRESTORE_DOCUMENT_KEY) as ArrayList<String>
+                    showAllergensList()
+                }
             }
-        //Updating the user login status with user name
-        user_status_tv?.text =
-            getString(R.string.placeholder_hi) + auth.currentUser?.displayName + getString(
-                R.string.placeholder_welcome
-            )
-
-        //Setting user avatar
-        if (auth.currentUser?.photoUrl != null)
-            user_avatar?.setImageURI(auth.currentUser?.photoUrl)
-        //Setting views visibility
-        signout_button?.visibility = View.VISIBLE
-        signin_button?.visibility = View.GONE
-
-        signout_button?.setOnClickListener {
-            signOut()
-        }
-
-        allergen_profile_card_view?.visibility = View.VISIBLE
-
-        add_allergen_button?.setOnClickListener {
-            showAddDialog()
-        }
-
-        getExceptionData()
+            ?.addOnFailureListener { exception ->
+                showSnackBar(main_container, getString(R.string.error_msg))
+            }
     }
 
-    private fun checkLoginState() {
-        if (auth.currentUser != null) {
-            onUserLogin()
+    private fun addExceptionData(enteredValue: String) {
+        allergenicList?.add(enteredValue)
+        //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
+        if (Utils.isConnected(this)) {
+            fireStoreDB.enableNetwork()
         } else {
-            onUserLogout()
-            createSignInIntent()
+            fireStoreDB.disableNetwork().addOnSuccessListener {
+                showAllergensList()
+            }.addOnFailureListener {
+                showSnackBar(main_container, getString(R.string.error_msg))
+            }
         }
+
+        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
+        fireStoreDocumentReference?.set(allergic)
+            ?.addOnSuccessListener {
+                showAllergensList()
+            }
+            ?.addOnFailureListener { e ->
+                showSnackBar(main_container, getString(R.string.error_msg))
+            }
+    }
+
+    private fun modifyExceptionData() {
+        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
+        fireStoreDocumentReference?.set(allergic)
+            ?.addOnSuccessListener {
+                showAllergensList()
+            }
+            ?.addOnFailureListener { e ->
+                showSnackBar(main_container, getString(R.string.error_msg))
+            }
     }
 
     private fun signOut() {
@@ -255,27 +262,9 @@ class MainActivity : AppCompatActivity() {
             if (resultCode == Activity.RESULT_OK) {
                 // Successfully signed in
                 onUserLogin()
-                val user = FirebaseAuth.getInstance().currentUser
-                // ...
             } else {
-                //showSnackbar(R.string.unknown_error);
                 Log.d("Sign in failed - ", " " + response?.error?.message)
-                // Sign in failed. If response is null the user canceled the
-                // sign-in flow using the back button. Otherwise check
-                // response.getError().getErrorCode() and handle the error.
-                // ...
             }
         }
-    }
-
-
-    private fun delete() {
-        // [START auth_fui_delete]
-        AuthUI.getInstance()
-            .delete(this)
-            .addOnCompleteListener {
-                // ...
-            }
-        // [END auth_fui_delete]
     }
 }
