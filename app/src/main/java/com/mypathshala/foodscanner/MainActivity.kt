@@ -18,11 +18,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.mypathshala.foodscanner.utils.FlowLayout
 import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
+    val TAG: String = MainActivity::class.java.simpleName
     companion object {
         private const val RC_SIGN_IN = 123
         private const val FIRESTORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
@@ -79,6 +81,11 @@ class MainActivity : AppCompatActivity() {
 
         add_allergen_button?.setOnClickListener {
             showAddDialog()
+        }
+
+        scan_button?.setOnClickListener {
+            val cameraIntent = Intent(this, CameraActivity::class.java)
+            startActivity(cameraIntent)
         }
 
         getExceptionData()
@@ -189,15 +196,7 @@ class MainActivity : AppCompatActivity() {
     private fun addExceptionData(enteredValue: String) {
         allergenicList?.add(enteredValue)
         //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
-        if (Utils.isConnected(this)) {
-            fireStoreDB.enableNetwork()
-        } else {
-            fireStoreDB.disableNetwork().addOnSuccessListener {
-                showAllergensList()
-            }.addOnFailureListener {
-                showSnackBar(main_container, getString(R.string.error_msg))
-            }
-        }
+        setFireStoreDBNetworkState()
 
         val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
         fireStoreDocumentReference?.set(allergic)
@@ -209,7 +208,21 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    private fun setFireStoreDBNetworkState() {
+        if (Utils.isConnected(this)) {
+            fireStoreDB.enableNetwork()
+        } else {
+            fireStoreDB.disableNetwork().addOnSuccessListener {
+                showAllergensList()
+            }.addOnFailureListener {
+                showSnackBar(main_container, getString(R.string.error_msg))
+            }
+        }
+    }
+
     private fun modifyExceptionData() {
+        //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
+        setFireStoreDBNetworkState()
         val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
         fireStoreDocumentReference?.set(allergic)
             ?.addOnSuccessListener {

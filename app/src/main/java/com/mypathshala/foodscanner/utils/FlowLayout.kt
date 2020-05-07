@@ -1,9 +1,10 @@
-package com.mypathshala.foodscanner
+package com.mypathshala.foodscanner.utils
 
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
+import com.mypathshala.foodscanner.R
 
 class FlowLayout : ViewGroup {
     private var mLineHeight: Int = 0
