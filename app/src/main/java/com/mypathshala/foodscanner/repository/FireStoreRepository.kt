@@ -8,6 +8,9 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
+/**
+ * Repository for both Home screen and product screen.
+ */
 object FireStoreRepository {
 
     private const val FIRE_STORE_COLLECTION_ALLERGENS_PROFILE = "allergns_profile"
@@ -23,11 +26,13 @@ object FireStoreRepository {
     private var fireStoreAllergicDocumentReference: DocumentReference? = null
 
     init {
+        /*If the user is logged in fetch create the FireStore document reference. So that it can be used when ever we need.*/
         getAllergicDocumentReference()
     }
 
     /**
      * Creating firestore document with user uid value. So Every user will have the separate document.
+     * Allergens is the separate Collection will have a separate document for each user.
      */
     private fun getAllergicDocumentReference() {
         fireStoreAllergicDocumentReference =
@@ -36,14 +41,21 @@ object FireStoreRepository {
             }
     }
 
+    /* On User logout Don't forgot to null the doc reference. Because this is specific for each user. */
     fun removeAllergicDocumentReference() {
         fireStoreAllergicDocumentReference = null
     }
 
+    /*
+    * To get the current logged in user.
+    * */
     fun getCurrentUser(): FirebaseUser? {
         return auth.currentUser
     }
 
+    /**
+     * To Fetch the allergen list of the logged in user.
+     */
     fun getUserExceptionData(): MutableLiveData<ArrayList<String>> {
         val allergenicList: MutableLiveData<ArrayList<String>> = MutableLiveData<ArrayList<String>>()
         if (fireStoreAllergicDocumentReference == null)
@@ -62,6 +74,10 @@ object FireStoreRepository {
         return allergenicList
     }
 
+    /**
+     * To update(Add, Modify, Delete) the allergens.
+     * @return boolean value either the operation is success or not.
+     */
     fun onUpdatingExceptionData(updatedAllergenicList: ArrayList<String>): MutableLiveData<Boolean> {
         val onSuccessFullUpdate: MutableLiveData<Boolean> = MutableLiveData<Boolean>()
         val allergic: HashMap<String, List<String>?> = hashMapOf(FIRE_STORE_DOCUMENT_KEY_ALLERGIC to updatedAllergenicList)
@@ -76,6 +92,13 @@ object FireStoreRepository {
         return onSuccessFullUpdate
     }
 
+    /**
+     * To update(Add, Modify) the product.
+     * @return boolean value either the operation is success or not.
+     * Products are created under the separate collection, Each product is a separate document.
+     *
+     * @param productCode is the barcode of the product.
+     */
     fun onAddUpdateProduct(productCode: String, productName: String, ingredients: String): MutableLiveData<Boolean> {
         val onSuccessFullUpdate: MutableLiveData<Boolean> = MutableLiveData<Boolean>()
         val fireStoreProductDocumentReference = fireStoreDB.collection(FIRE_STORE_COLLECTION_PRODUCTS).document(productCode)
@@ -91,6 +114,9 @@ object FireStoreRepository {
         return onSuccessFullUpdate
     }
 
+    /**
+     * To check whether the product is already added or not.
+     */
     fun getProduct(productCode: String): MutableLiveData<DocumentSnapshot> {
         val fireStoreProductDocumentReference = fireStoreDB.collection(FIRE_STORE_COLLECTION_PRODUCTS).document(productCode)
         val productItem: MutableLiveData<DocumentSnapshot> = MutableLiveData<DocumentSnapshot>()
@@ -104,6 +130,9 @@ object FireStoreRepository {
         return productItem
     }
 
+    /**
+     * To fetch the ingredients of the product.
+     */
     fun getProductIngredients(productCode: String): MutableLiveData<String> {
         val productIngredients: MutableLiveData<String> = MutableLiveData<String>()
         val fireStoreProductDocumentReference = fireStoreDB.collection(FIRE_STORE_COLLECTION_PRODUCTS).document(productCode)
@@ -114,6 +143,4 @@ object FireStoreRepository {
         }
         return productIngredients
     }
-
-
 }
