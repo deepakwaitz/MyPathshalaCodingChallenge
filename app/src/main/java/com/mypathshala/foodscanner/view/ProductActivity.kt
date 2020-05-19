@@ -6,38 +6,34 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.mypathshala.foodscanner.view.CameraActivity.Companion.BARCODE_BUNDLE_KEY
-import com.mypathshala.foodscanner.view.CameraActivity.Companion.PRODUCT_NAME_BUNDLE_KEY
 import com.mypathshala.foodscanner.R
-import com.mypathshala.foodscanner.view.MainActivity.Companion.FIRESTORE_COLLECTION_ALLERGENS_PROFILE
+import com.mypathshala.foodscanner.repository.FireStoreRepository.FIRE_STORE_DOCUMENT_KEY_INGREDIENTS
+import com.mypathshala.foodscanner.repository.FireStoreRepository.FIRE_STORE_DOCUMENT_KEY_NAME
 import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
+import com.mypathshala.foodscanner.view.CameraActivity.Companion.BARCODE_BUNDLE_KEY
+import com.mypathshala.foodscanner.view.CameraActivity.Companion.PRODUCT_NAME_BUNDLE_KEY
+import com.mypathshala.foodscanner.viewModel.ProductViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_product.*
 
 class ProductActivity : AppCompatActivity() {
     val TAG: String = ProductActivity::class.java.simpleName
 
-    companion object {
-        private const val FIRESTORE_COLLECTION_PRODUCTS = "products"
-        private const val FIRESTORE_DOCUMENT_KEY_NAME = "name"
-        private const val FIRESTORE_DOCUMENT_KEY_INGREDIENTS = "ingredients"
-    }
-
     private var barCode: String? = null
     private var scannedIngredients: String? = ""
     private var updatedProductName: String? = null
     private var isFromTextScan: Boolean = false
 
-    private val auth = FirebaseAuth.getInstance()
     private val fireStoreDB = Firebase.firestore
-    private var fireStoreProductDocReference: DocumentReference? = null
-    private var fireStoreAllergenDocReference: DocumentReference? = null
+
+
+    private lateinit var productViewModel: ProductViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,9 +43,10 @@ class ProductActivity : AppCompatActivity() {
         updatedProductName = intent.getStringExtra(CameraActivity.PRODUCT_NAME_BUNDLE_KEY)
         isFromTextScan = intent.getBooleanExtra(CameraActivity.IS_TEXT_SCAN, false)
 
+        productViewModel = ViewModelProviders.of(this).get(ProductViewModel::class.java)
+
         product_name_edit_text?.setText(updatedProductName)
 
-        // product_ingredient_edit_text?.setText(scannedIngredients)
         ingredient_scan_button?.setOnClickListener {
             updatedProductName = product_name_edit_text?.text.toString()
             val cameraIntent = Intent(this, CameraActivity::class.java)
@@ -59,20 +56,10 @@ class ProductActivity : AppCompatActivity() {
             startActivity(cameraIntent)
             finish()
         }
-
-        if (!TextUtils.isEmpty(barCode)) {
-            fireStoreAllergenDocReference =
-                auth.currentUser?.uid?.let { fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(it) }
-
-            fireStoreProductDocReference = fireStoreDB.collection(FIRESTORE_COLLECTION_PRODUCTS).document(barCode!!)
-
-            checkForProduct()
-        }
+        checkForProduct()
     }
 
     private fun addUpdateProduct(productName: String, ingredients: String) {
-        val product = hashMapOf(FIRESTORE_DOCUMENT_KEY_NAME to productName, FIRESTORE_DOCUMENT_KEY_INGREDIENTS to ingredients)
-
         if (Utils.isConnected(this)) {
             fireStoreDB.enableNetwork()
         } else {
@@ -83,41 +70,43 @@ class ProductActivity : AppCompatActivity() {
             }
         }
 
-        fireStoreProductDocReference?.set(product)
-            ?.addOnSuccessListener {
-                finish()
-            }
-            ?.addOnFailureListener { e ->
-                showSnackBar(product_container, getString(R.string.error_msg))
-            }
+        barCode?.let {
+            productViewModel.onAddUpdateProduct(it, productName, ingredients).observe(this, Observer { isSuccessFull ->
+                if (isSuccessFull)
+                    finish()
+                else
+                    showSnackBar(product_container, getString(R.string.error_msg))
+            })
+        }
     }
 
     private fun checkForProduct() {
-        /*Fetching allergic list*/
-        fireStoreProductDocReference?.get()
-            ?.addOnSuccessListener { result ->
-                if (result?.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) != null) {
-                    onProductFound(result)
-                    checkForAllergens()
-                } else if (isFromTextScan) {
-                    product_name_edit_text?.setText(updatedProductName)
-                    product_ingredient_edit_text?.setText(scannedIngredients)
-                    onAddProduct()
-                } else {
-                    showSnackBar(product_container, "Product Not Found")
-                    showAddProductDialog()
+        barCode?.let { it ->
+            productViewModel.getProduct(it).observe(this, Observer { productDocSnapShot ->
+                when {
+                    productDocSnapShot != null -> {
+                        onProductFound(productDocSnapShot)
+                        checkForAllergens()
+                    }
+                    isFromTextScan -> {
+                        product_name_edit_text?.setText(updatedProductName)
+                        product_ingredient_edit_text?.setText(scannedIngredients)
+                        onAddProduct()
+                    }
+                    else -> {
+                        showSnackBar(product_container, "Product Not Found")
+                        showAddProductDialog()
+                    }
                 }
-            }
-            ?.addOnFailureListener { exception ->
-
-            }
+            })
+        }
     }
 
     private fun onProductFound(result: DocumentSnapshot) {
         page_title?.text = getString(R.string.title_product_found)
 
-        val productName = result.data?.get(FIRESTORE_DOCUMENT_KEY_NAME) as String
-        val ingredients = result.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) as String
+        val productName = result.data?.get(FIRE_STORE_DOCUMENT_KEY_NAME) as String
+        val ingredients = result.data?.get(FIRE_STORE_DOCUMENT_KEY_INGREDIENTS) as String
 
         if (!TextUtils.isEmpty(updatedProductName))
             product_name_edit_text?.setText(updatedProductName)
@@ -136,34 +125,26 @@ class ProductActivity : AppCompatActivity() {
     }
 
     private fun checkForAllergens() {
-        var allergenicList: ArrayList<String>? = arrayListOf()
+        var allergenicList: java.util.ArrayList<String>?
 
-        /*Fetching allergic list*/
-        fireStoreAllergenDocReference?.get()
-            ?.addOnSuccessListener { result ->
-                if (result?.data?.get(MainActivity.FIRESTORE_DOCUMENT_KEY) != null) {
-                    allergenicList = result?.data?.get(MainActivity.FIRESTORE_DOCUMENT_KEY) as ArrayList<String>
-                    /*Fetching product's inredients*/
-                    fetchIngredients(allergenicList)
-                }
-            }
-            ?.addOnFailureListener { exception ->
+        productViewModel.getUserExceptionalList()?.observe(this, Observer {
+            if (it != null && it.size > 0) {
+                allergenicList = it
+                fetchIngredients(allergenicList)
+            } else
                 showSnackBar(product_container, getString(R.string.error_msg))
-            }
+        })
     }
 
     private fun fetchIngredients(allergenicList: ArrayList<String>?) {
-        var ingredients: String
-        fireStoreProductDocReference?.get()
-            ?.addOnSuccessListener { result ->
-                if (result?.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) != null) {
-                    ingredients = result.data?.get(FIRESTORE_DOCUMENT_KEY_INGREDIENTS) as String
+        barCode?.let {
+            productViewModel.getProductIngredients(it).observe(this, Observer { ingredients ->
+                if (!TextUtils.isEmpty(ingredients))
                     isAllergic(allergenicList, ingredients)
-                }
-            }
-            ?.addOnFailureListener { exception ->
-                showSnackBar(product_container, getString(R.string.error_msg))
-            }
+                else
+                    showSnackBar(product_container, getString(R.string.error_msg))
+            })
+        }
     }
 
     private fun isAllergic(allergenicList: ArrayList<String>?, ingredients: String?) {
@@ -194,9 +175,7 @@ class ProductActivity : AppCompatActivity() {
                 finish()
             }
         }
-
     }
-
 
     private fun showAddProductDialog() {
         val exceptionAlertDialog = AlertDialog.Builder(this)
@@ -207,9 +186,7 @@ class ProductActivity : AppCompatActivity() {
         exceptionAlertDialog.setPositiveButton(
             getString(R.string.placeholder_add)
         ) { _, _ ->
-
             onAddProduct()
-
         }
 
         exceptionAlertDialog.setNegativeButton(

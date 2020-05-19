@@ -35,6 +35,6 @@ class HomeScreenViewModel : ViewModel() {
     }
 
     fun removeUserDocumentReference() {
-        FireStoreRepository.removeUserDocumentReference()
+        FireStoreRepository.removeAllergicDocumentReference()
     }
 }

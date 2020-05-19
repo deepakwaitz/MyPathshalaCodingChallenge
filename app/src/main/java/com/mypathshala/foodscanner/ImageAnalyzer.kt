@@ -12,7 +12,7 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
 /**
  * Here we have two types of image detectors, 'onDeviceTextRecognizer' for scanning the ingredients from the product, and 'visionBarcodeDetector' to scan the product barcode.
  */
-class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolean) : ImageAnalysis.Analyzer {
+class ImageAnalyzer(activity: Activity, private val isBarCodeScanner: Boolean) : ImageAnalysis.Analyzer {
     val TAG: String = ImageAnalyzer::class.java.simpleName
     var scannerCallBack: IScannerCallBacks = activity as IScannerCallBacks
     var alreadyDetected = false
@@ -31,7 +31,7 @@ class ImageAnalyzer(val activity: Activity, private val isBarCodeScanner: Boolea
         if (mediaImage != null) {
             val firebaseVisionImage = FirebaseVisionImage.fromMediaImage(mediaImage, imageRotation)
 
-           /*Based on the boolean we choose the detector.*/
+            /*Based on the boolean we choose the detector.*/
             if (isBarCodeScanner)
                 scanBarCode(firebaseVisionImage)
             else
