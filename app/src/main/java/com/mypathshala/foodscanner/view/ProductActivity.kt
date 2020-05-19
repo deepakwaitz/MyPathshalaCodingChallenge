@@ -1,4 +1,4 @@
-package com.mypathshala.foodscanner
+package com.mypathshala.foodscanner.view
 
 import android.app.AlertDialog
 import android.content.Intent
@@ -11,9 +11,10 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.mypathshala.foodscanner.CameraActivity.Companion.BARCODE_BUNDLE_KEY
-import com.mypathshala.foodscanner.CameraActivity.Companion.PRODUCT_NAME_BUNDLE_KEY
-import com.mypathshala.foodscanner.MainActivity.Companion.FIRESTORE_COLLECTION_ALLERGENS_PROFILE
+import com.mypathshala.foodscanner.view.CameraActivity.Companion.BARCODE_BUNDLE_KEY
+import com.mypathshala.foodscanner.view.CameraActivity.Companion.PRODUCT_NAME_BUNDLE_KEY
+import com.mypathshala.foodscanner.R
+import com.mypathshala.foodscanner.view.MainActivity.Companion.FIRESTORE_COLLECTION_ALLERGENS_PROFILE
 import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
 import kotlinx.android.synthetic.main.activity_main.*

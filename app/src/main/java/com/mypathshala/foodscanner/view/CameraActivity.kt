@@ -1,4 +1,4 @@
-package com.mypathshala.foodscanner
+package com.mypathshala.foodscanner.view
 
 import android.Manifest
 import android.app.Activity
@@ -15,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.mypathshala.foodscanner.IScannerCallBacks
+import com.mypathshala.foodscanner.ImageAnalyzer
+import com.mypathshala.foodscanner.R
 import java.util.concurrent.Executors
 
 class CameraActivity : AppCompatActivity(), IScannerCallBacks {
@@ -43,7 +46,7 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
             viewFinder.post { startCamera() }
         } else {
             ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, Companion.REQUEST_CODE_PERMISSIONS
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
 
@@ -123,7 +126,7 @@ class CameraActivity : AppCompatActivity(), IScannerCallBacks {
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults: IntArray
     ) {
-        if (requestCode == Companion.REQUEST_CODE_PERMISSIONS) {
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 viewFinder.post { startCamera() }
             } else {

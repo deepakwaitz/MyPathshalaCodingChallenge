@@ -1,7 +1,8 @@
-package com.mypathshala.foodscanner
+package com.mypathshala.foodscanner.view
 
 import android.app.Activity
 import android.app.AlertDialog.Builder
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
@@ -12,15 +13,18 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProviders
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.mypathshala.foodscanner.R
 import com.mypathshala.foodscanner.utils.FlowLayout
 import com.mypathshala.foodscanner.utils.Utils
 import com.mypathshala.foodscanner.utils.Utils.showSnackBar
+import com.mypathshala.foodscanner.viewModel.HomeScreenViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -38,13 +42,19 @@ class MainActivity : AppCompatActivity() {
     private var fireStoreDocumentReference: DocumentReference? = null
     private var exceptionLayout: FlowLayout? = null
     private var allergenicList: ArrayList<String>? = arrayListOf()
+    private lateinit var homeScreenViewModel: HomeScreenViewModel
+    private lateinit var mContext: Context
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        mContext = this.baseContext
         exceptionLayout = findViewById(R.id.allergen_items_flow_layout)
+        homeScreenViewModel = ViewModelProviders.of(this).get(HomeScreenViewModel::class.java)
+
         checkLoginState()
     }
+
 
     /**
      * To check the login state, eight the user is logged or not. Only logged in users can access the app.
@@ -66,15 +76,14 @@ class MainActivity : AppCompatActivity() {
                     it
                 )
             }
-        //Updating the user login status with user name
-        user_status_tv?.text =
-            getString(R.string.placeholder_hi) + auth.currentUser?.displayName + getString(
-                R.string.placeholder_welcome
-            )
+
+        //Updating the user login status with UserName
+        user_status_tv?.text = homeScreenViewModel.getUserStatus(mContext)
 
         //Setting user avatar
-        if (auth.currentUser?.photoUrl != null)
-            user_avatar?.setImageURI(auth.currentUser?.photoUrl)
+        user_avatar?.setImageURI(homeScreenViewModel.getUserAvatarURL())
+
+
         //Setting views visibility
         signout_button?.visibility = View.VISIBLE
         signin_button?.visibility = View.GONE
@@ -107,11 +116,12 @@ class MainActivity : AppCompatActivity() {
         fireStoreDocumentReference = null
         allergenicList?.clear()
         exceptionLayout?.removeAllViews()
-        //Updating the user login status as guest user
-        user_status_tv?.text = getString(R.string.placeholder_guest_user)
+
+        //Updating the user login status with GuestUser
+        user_status_tv?.text = homeScreenViewModel.getUserStatus(mContext)
 
         //Remove avatar from image view
-        user_avatar?.setImageURI("")
+        user_avatar?.setImageURI(homeScreenViewModel.getUserAvatarURL())
 
         //Updating views visibility
         signout_button?.visibility = View.GONE
