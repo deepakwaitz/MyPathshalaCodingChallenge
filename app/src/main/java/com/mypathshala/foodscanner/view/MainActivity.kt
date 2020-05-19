@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
@@ -37,9 +38,7 @@ class MainActivity : AppCompatActivity() {
         const val IS_BARCODE_SCANNER = "is_barcode_scanner"
     }
 
-    private val auth = FirebaseAuth.getInstance()
     private val fireStoreDB = Firebase.firestore
-    private var fireStoreDocumentReference: DocumentReference? = null
     private var exceptionLayout: FlowLayout? = null
     private var allergenicList: ArrayList<String>? = arrayListOf()
     private lateinit var homeScreenViewModel: HomeScreenViewModel
@@ -60,7 +59,7 @@ class MainActivity : AppCompatActivity() {
      * To check the login state, eight the user is logged or not. Only logged in users can access the app.
      */
     private fun checkLoginState() {
-        if (auth.currentUser != null) {
+        if (homeScreenViewModel.isUserLoggedIn()) {
             onUserLogin()
         } else {
             onUserLogout()
@@ -69,14 +68,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onUserLogin() {
-        //Creating firestore document with user uid value. So Every user will have the separate document.
-        fireStoreDocumentReference =
-            auth.currentUser?.uid?.let {
-                fireStoreDB.collection(FIRESTORE_COLLECTION_ALLERGENS_PROFILE).document(
-                    it
-                )
-            }
-
         //Updating the user login status with UserName
         user_status_tv?.text = homeScreenViewModel.getUserStatus(mContext)
 
@@ -106,14 +97,21 @@ class MainActivity : AppCompatActivity() {
             startActivity(cameraIntent)
         }
 
-        getExceptionData()
+        // Here we fetch the collection 'allergy_profile' and the respective document of the user. After fetching we show the items.
+        homeScreenViewModel.getUserExceptionalList()?.observe(this, Observer {
+            if (it != null && it.size > 0) {
+                allergenicList = it
+                showAllergensList()
+            } //else
+            // showSnackBar(main_container, getString(R.string.error_msg))
+        })
     }
 
     /**
      * Update the UI and reset the user specific values.
      */
     private fun onUserLogout() {
-        fireStoreDocumentReference = null
+        homeScreenViewModel.removeUserDocumentReference()
         allergenicList?.clear()
         exceptionLayout?.removeAllViews()
 
@@ -151,7 +149,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 exceptionLayout?.addView(exceptionView)
-
             }
         }
     }
@@ -170,8 +167,10 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.placeholder_add)
         ) { _, _ ->
             val enteredValue = inputText.text.toString()
-            if (!TextUtils.isEmpty(enteredValue))
-                addExceptionData(enteredValue)
+            if (!TextUtils.isEmpty(enteredValue)) {
+                allergenicList?.add(enteredValue)
+                updateExceptionData()
+            }
         }
 
         exceptionAlertDialog.setNegativeButton(
@@ -198,7 +197,8 @@ class MainActivity : AppCompatActivity() {
             val enteredValue = inputText.text.toString()
             if (!TextUtils.isEmpty(enteredValue)) {
                 allergenicList?.set(index, enteredValue)
-                modifyExceptionData()
+                //modifyExceptionData()
+                updateExceptionData()
             }
 
         }
@@ -207,43 +207,28 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.placeholder_delete)
         ) { _, _ ->
             allergenicList?.removeAt(index)
-            modifyExceptionData()
+            //modifyExceptionData()
+            updateExceptionData()
         }
         exceptionAlertDialog.show()
     }
 
     /**
-     * Here we fetch the collection 'allergy_profile' and the respective document of the user. After fetching we show the items.
+     * Here we add/modify/delete the exceptions to the FireStore db. Also works in offline
      */
-    private fun getExceptionData() {
-        fireStoreDocumentReference?.get()
-            ?.addOnSuccessListener { result ->
-                if (result?.data?.get(FIRESTORE_DOCUMENT_KEY) != null) {
-                    allergenicList = result?.data?.get(FIRESTORE_DOCUMENT_KEY) as ArrayList<String>
-                    showAllergensList()
-                }
-            }
-            ?.addOnFailureListener { exception ->
-                showSnackBar(main_container, getString(R.string.error_msg))
-            }
-    }
-
-    /**
-     * Here we add the exceptions to the firestore db. Also works in offline
-     */
-    private fun addExceptionData(enteredValue: String) {
-        allergenicList?.add(enteredValue)
+    private fun updateExceptionData() {
         //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
         setFireStoreDBNetworkState()
 
-        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
-        fireStoreDocumentReference?.set(allergic)
-            ?.addOnSuccessListener {
-                showAllergensList()
-            }
-            ?.addOnFailureListener { e ->
-                showSnackBar(main_container, getString(R.string.error_msg))
-            }
+        allergenicList?.let {
+            homeScreenViewModel.onUpdatingExceptionalData(it).observe(this, Observer { isSuccessFull ->
+                if (isSuccessFull)
+                    showAllergensList()
+                else {
+                    showSnackBar(main_container, getString(R.string.error_msg))
+                }
+            })
+        }
     }
 
     /**
@@ -259,22 +244,6 @@ class MainActivity : AppCompatActivity() {
                 showSnackBar(main_container, getString(R.string.error_msg))
             }
         }
-    }
-
-    /**
-     * Here we update/delete the exceptions to the firestore db. Also works in offline
-     */
-    private fun modifyExceptionData() {
-        //Firestore has offline support as well, to make sure the value is being updated on offline mode we have to do the following check.
-        setFireStoreDBNetworkState()
-        val allergic: HashMap<String, List<String>?> = hashMapOf(FIRESTORE_DOCUMENT_KEY to allergenicList)
-        fireStoreDocumentReference?.set(allergic)
-            ?.addOnSuccessListener {
-                showAllergensList()
-            }
-            ?.addOnFailureListener { e ->
-                showSnackBar(main_container, getString(R.string.error_msg))
-            }
     }
 
     /**
